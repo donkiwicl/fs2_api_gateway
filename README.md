@@ -3,6 +3,8 @@
 Tienda de ejemplo con Spring Boot 4.1.2 y Spring Cloud Gateway (Server MVC).
 Refuerzo de DSY1103 para DSY1104. Todo el tráfico entra por `http://localhost:8080`.
 
+La explicación completa, paso a paso, está en [GUIA.md](GUIA.md).
+
 | Servicio | Puerto | Publicado con Docker | Responsabilidad |
 | --- | --- | --- | --- |
 | gateway | 8080 | Sí | Rutas, JWT, roles, CORS, fallback, Swagger único |

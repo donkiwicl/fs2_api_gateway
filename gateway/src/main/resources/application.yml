@@ -1,0 +1,98 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      server:
+        webmvc:
+          routes:
+            # El orden importa: se usa la primera ruta cuyo predicado coincide.
+            - id: auth
+              uri: ${AUTH_URL:http://localhost:8081}
+              predicates:
+                - Path=/api/auth/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    id: auth
+                    fallbackUri: forward:/fallback/auth
+
+            - id: productos
+              uri: ${PRODUCTOS_URL:http://localhost:8082}
+              predicates:
+                - Path=/api/productos/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    id: productos
+                    fallbackUri: forward:/fallback/productos
+
+            - id: pedidos
+              uri: ${PEDIDOS_URL:http://localhost:8083}
+              predicates:
+                - Path=/api/pedidos/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    id: pedidos
+                    fallbackUri: forward:/fallback/pedidos
+
+            # Documentacion: cada ruta expone SOLO el JSON OpenAPI de un servicio.
+            # Es una ruta exacta a proposito: un comodin con StripPrefix permitiria
+            # llegar a cualquier endpoint interno saltandose las reglas de seguridad.
+            - id: docs-auth
+              uri: ${AUTH_URL:http://localhost:8081}
+              predicates:
+                - Path=/docs/auth
+              filters:
+                - SetPath=/v3/api-docs
+            - id: docs-productos
+              uri: ${PRODUCTOS_URL:http://localhost:8082}
+              predicates:
+                - Path=/docs/productos
+              filters:
+                - SetPath=/v3/api-docs
+            - id: docs-pedidos
+              uri: ${PEDIDOS_URL:http://localhost:8083}
+              predicates:
+                - Path=/docs/pedidos
+              filters:
+                - SetPath=/v3/api-docs
+
+# Swagger unico: un selector para ver la API de cada microservicio
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: auth
+        url: /docs/auth
+      - name: productos
+        url: /docs/productos
+      - name: pedidos
+        url: /docs/pedidos
+
+# Debe ser EXACTAMENTE el mismo secreto que usa auth-service para firmar.
+# El valor por defecto es solo para desarrollo local.
+jwt:
+  secret: ${JWT_SECRET:solo-desarrollo-local-cambiar-este-secreto-1234567890}
+  issuer: tienda-auth
+
+# El circuit breaker corta por defecto a 1 s (responde 504). Es muy poco para un
+# servicio recien levantado, cuya primera peticion tarda mas en la JVM.
+resilience4j:
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 5s
+
+cors:
+  allowed-origins: ${CORS_ORIGINS:http://localhost:5173}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

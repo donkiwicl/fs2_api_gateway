@@ -1,0 +1,44 @@
+# Solo el gateway publica un puerto. Los microservicios quedan en la red interna:
+# desde fuera de Docker no se puede llegar a ellos sin pasar por el gateway.
+x-java: &java
+  JAVA_TOOL_OPTIONS: "-Xmx256m"
+
+services:
+  gateway:
+    build: ./gateway
+    ports:
+      - "8080:8080"
+    environment:
+      <<: *java
+      JWT_SECRET: ${JWT_SECRET:?Copia .env.example a .env antes de levantar el proyecto}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      AUTH_URL: http://auth-service:8081
+      PRODUCTOS_URL: http://productos-service:8082
+      PEDIDOS_URL: http://pedidos-service:8083
+    depends_on:
+      - auth-service
+      - productos-service
+      - pedidos-service
+
+  auth-service:
+    build: ./auth-service
+    expose:
+      - "8081"
+    environment:
+      <<: *java
+      JWT_SECRET: ${JWT_SECRET:?Copia .env.example a .env antes de levantar el proyecto}
+
+  productos-service:
+    build: ./productos-service
+    expose:
+      - "8082"
+    environment:
+      <<: *java
+
+  pedidos-service:
+    build: ./pedidos-service
+    expose:
+      - "8083"
+    environment:
+      <<: *java
+      PRODUCTOS_URL: http://productos-service:8082

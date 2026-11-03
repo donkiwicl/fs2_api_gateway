@@ -1,0 +1,28 @@
+server:
+  port: 8081
+
+spring:
+  web:
+    error:
+      include-message: always
+  application:
+    name: auth-service
+  datasource:
+    # Base en memoria propia: cada microservicio es dueno de sus datos.
+    url: jdbc:h2:mem:authdb
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+
+# Mismo secreto que el gateway. Valor por defecto solo para desarrollo local.
+jwt:
+  secret: ${JWT_SECRET:solo-desarrollo-local-cambiar-este-secreto-1234567890}
+  issuer: tienda-auth
+  expiracion-minutos: 30
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
